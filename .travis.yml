@@ -12,6 +12,8 @@ notifications:
 env:
   - DOCUMENTER_DEBUG="true" CONDA_JL_VERSION="2" PYTHON=""
 script:
+  - julia -e 'Pkg.clone("https://github.com/zenna/Arrows.jl")'
+  - julia -e 'Pkg.build("Arrows)'
   - julia -e 'Pkg.clone(pwd())'
   - julia -e 'Pkg.build("TensorFlowTarget")'
   - julia -e 'Pkg.test("TensorFlowTarget", coverage=true)'
