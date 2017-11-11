@@ -3,23 +3,27 @@ using Arrows.TestArrows
 using Base.Test
 using Arrows.TensorFlowTarget
 
-function pre_test(arr::Arrow)
-  println("Testing arrow ", name(arr))
-  arr
+using Arrows
+using Base.Test
+include("common.jl")
+
+exclude = ["policy.jl",
+           "optimize.jl",
+           "value.jl"]
+test_dir = joinpath(Pkg.dir("Arrows"), "test", "tests")
+tests = setdiff(readdir(test_dir), exclude)
+
+print_with_color(:blue, "Running tests:\n")
+
+# Single thread
+srand(345679)
+res = map(tests) do t
+  println("Testing: ", t)
+  include(joinpath(test_dir, t))
+  nothing
 end
 
-function test_to_graph(arr)
-  Arrows.TensorFlowTarget.Graph(arr)
-end
-
-foreach(test_to_graph ∘ pre_test, plain_arrows())
-
-function test_tf_optimize()
-  carr = Arrows.TestArrows.xy_plus_x_arr()
-  invcarr = aprx_invert(carr)
-  ϵprt = ◂(invcarr, is(ϵ), 1)
-  over = ▸(invcarr, is(θp))
-  Arrows.TensorFlowTarget.optimize(invcarr, over, ϵprt, rand(length(▸(invcarr))), [], TFTarget)
-end
-
-test_tf_optimize()
+# print method ambiguities
+println("Potentially stale exports: ")
+display(Base.Test.detect_ambiguities(Arrows))
+println()

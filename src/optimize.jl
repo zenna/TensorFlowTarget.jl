@@ -18,11 +18,11 @@ Optimization.
 - `optimize`: optimize? (compute grads/change weights)
 - `start_i`: what index is this starting at (used by callbacks)
 """
-function optimize(step!::Function,
+function optimize(step!::Function;
                   pre_callbacks=[],
                   callbacks=[],
                   post_callbacks=[],
-                  cont=data -> data.i < 100,
+                  cont=data -> data.i < 100000,
                   resetlog::Bool=true,
                   logdir::String="",
                   optimize::Bool=true,
@@ -52,6 +52,8 @@ take!(x::Real) = x
 take!(x::Array{<:Real}) = x
 take!(f::Function) = f()
 
+take1(rep) = collect(Base.Iterators.take(rep, 1))[1]
+
 """
 argmin_θ(ϵprt): find θ which minimizes ϵprt
 
@@ -65,38 +67,50 @@ argmin_θ(ϵprt): find θ which minimizes ϵprt
 - `argmin`: argmin of `over` found
 """
 function optimize(carr::CompArrow,
-                  over::Vector{Port},
                   ϵprt::Port,
-                  init::Vector,
-                  callbacks=[],
-                  target=Type{TFTarget})
-  length(init) == length(▸(carr)) || throw(ArgumentError("Need init value ∀ ▸"))
+                  iters,
+                  target=Type{TFTarget};
+                  kwargs...)
+  length(iters) == length(▸(carr)) || throw(ArgumentError("Need iteraator foreach in port"))
   graph = tf.Graph()
+  sess = tf.Session(graph)
+
+  summary = TensorFlow.summary
+  # weight_summary = summary.histogram("Parameters", weights)
+
+  # Create a summary writer
+
   tf.as_default(graph) do
+    @show collect(TensorFlow.get_operations(graph))
     intens = Tensor[]
     phs = Dict{Tensor, Int}()
     for (i, prt) in enumerate(▸(carr))
-      if prt ∈ over
-        push!(intens, tf.Variable(take!(init[i]), name="varinp_$i"))
-      else
-        # FIXME: Specific type
-        ph = tf.placeholder(Float64, name="inp_$i")
-        push!(intens, ph)
-        phs[ph] = i
-      end
+      ph = tf.placeholder(Float64, name="inp_$i")
+      push!(intens, ph)
+      phs[ph] = i
+      # end
     end
     tfarr = Graph(carr, graph, intens)
     ϵid = findfirst(◂(ϵprt.arrow), ϵprt)
-    loss = tfarr.out[ϵid]
-    sess = tf.Session(graph)
+    losses = tfarr.out[ϵid]
+    meanloss = TensorFlow.reduce_mean(losses)
     optimizer = train.AdamOptimizer()
-    minimize_op = train.minimize(optimizer, loss)
+    minimize_op = train.minimize(optimizer, meanloss)
+    alpha_summmary = summary.scalar("Learning rate", meanloss)
+    merged_summary_op = summary.merge_all()
+    summary_writer = summary.FileWriter("./my_log_dir")
+    @show length(collect(TensorFlow.get_operations(graph)))
     run(sess, global_variables_initializer())
+    i = 44
     function step!()
-      phsvalmap = Dict(ph => take!(init[id]) for (ph, id) in phs)
-      cur_loss, _ = run(sess, [loss, minimize_op], phsvalmap)
+      phsvalmap = Dict(ph => take1(iters[id]) for (ph, id) in phs)
+      cur_loss, _ = run(sess, [meanloss, minimize_op], phsvalmap)
+      summaries = run(sess, merged_summary_op, phsvalmap)
+      write(summary_writer, summaries, i)
+      cur_loss
+      i = i + 1
       cur_loss
     end
-    return optimize(step!)
+    return optimize(step!; kwargs...)
   end
 end
