@@ -25,6 +25,15 @@ conv(::Arrows.ReshapeArrow, args)::Vector{Tensor} = [tf.reshape(args...)]
 conv(::GatherNdArrow, args)::Vector{Tensor} = [tf.gather_nd(args...)]
 conv(::NegArrow, args)::Vector{Tensor} = [tf.neg(args...)]
 conv(::ExpArrow, args)::Vector = [tf.exp(args...)]
+conv(arr::Arrows.ReduceSumArrow, args)::Vector{Tensor} = [tf.reduce_sum(args...; axis=arr.axis)]
+conv(::Arrows.LessThanArrow, args)::Vector{Tensor} = [tf.less(args...)]
+conv(::Arrows.GreaterThanArrow, args)::Vector{Tensor} = [tf.greater(args...)]
+function conv(::Arrows.IfElseArrow, args)::Vector{Tensor}
+  a, b, c = args
+  [a .* c .+ b .* (1.0 - c)]
+end
+sanitizeconst(value::Tuple) = [value...]
+sanitizeconst(value) = value
 conv(arr::SourceArrow, args)::Vector{Tensor} = [tf.constant(sanitizeconst(arr.value))]
 conv(sarr::SubArrow, xs::Vector) = conv(deref(sarr), xs)
 
