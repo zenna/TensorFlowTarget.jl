@@ -15,8 +15,8 @@ function mlp_template(args, insizes, outsizes)
   x = cat(2, flatargs...)
   # Combine inputs
   # Make parameters
-  W = Variable(zeros(Float64, nin, nout))
-  b = Variable(zeros(Float64, nout))
+  W = Variable(rand(Float64, nin, nout))
+  b = Variable(rand(Float64, nout))
   y = nn.elu(x*W + b)
   y = y + 1
   lb = 1
