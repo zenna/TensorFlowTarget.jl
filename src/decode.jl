@@ -23,6 +23,16 @@ conv(arr::UnknownArrow, args::Args)::Vector{Tensor} = arr.func(args)
 conv(::Arrows.AbsArrow, args::Args)::Vector{Tensor} = [tf.abs(args...)]
 conv(::Arrows.ReshapeArrow, args)::Vector{Tensor} = [tf.reshape(args...)]
 conv(::GatherNdArrow, args)::Vector{Tensor} = [tf.gather_nd(args...)]
+function conv(::GatherNdArrow, args)::Vector{Tensor}
+  params, indices_ = args[1], args[2]
+  indices_ = indices_ + convert(tf.Tensor{eltype(indices_)}, 1)
+  [tf.gather_nd(params, indices_)]
+end
+function conv(::ScatterNdArrow, args)::Vector{Tensor}
+  updates, indices_, shape = args[1], args[2], args[3]
+  indices_ = indices_ + convert(tf.Tensor{eltype(indices_)}, 1)
+  [tf.scatter_nd(indices_, updates, shape)]
+end
 conv(::NegArrow, args)::Vector{Tensor} = [tf.neg(args...)]
 conv(::ExpArrow, args)::Vector = [tf.exp(args...)]
 conv(arr::Arrows.ReduceSumArrow, args)::Vector{Tensor} = [tf.reduce_sum(args...; axis=arr.axis)]
