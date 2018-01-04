@@ -16,13 +16,15 @@ conv(::SubtractArrow, args::Args)::Vector{Tensor} = [args[1] - args[2]]
 conv(::CosArrow, args::Args)::Vector{Tensor} = [tf.cos(args...)]
 conv(::ASinArrow, args::Args)::Vector{Tensor} = [tf.asin(args...)]
 conv(::ACosArrow, args::Args)::Vector{Tensor} = [tf.acos(args...)]
+conv(::Arrows.MaxArrow, args::Args)::Vector{Tensor} = [tf.maximum(args...)]
 conv{N}(arr::DuplArrow{N}, args::Args)::Vector{Tensor} = [args[1] for i = 1:N]
 conv(::IdentityArrow, args::Args)::Vector{Tensor} = [tf.identity(args...)]
 conv(::InvDuplArrow, args::Args)::Vector{Tensor} = [args[1]]
-conv(arr::UnknownArrow, args::Args)::Vector{Tensor} = arr.func(args)
+#conv(arr::UnknownArrow, args::Args)::Vector{Tensor} = arr.func(args)
 conv(::Arrows.AbsArrow, args::Args)::Vector{Tensor} = [tf.abs(args...)]
 conv(::Arrows.ReshapeArrow, args)::Vector{Tensor} = [tf.reshape(args...)]
-conv(::GatherNdArrow, args)::Vector{Tensor} = [tf.gather_nd(args...)]
+# Automatic Broadcasting 
+conv(::Arrows.BroadcastArrow, args)::Vector{Tensor} = [tf.identity(args...)]
 function conv(::GatherNdArrow, args)::Vector{Tensor}
   params, indices_ = args[1], args[2]
   indices_ = indices_ + convert(tf.Tensor{eltype(indices_)}, 1)
@@ -35,9 +37,10 @@ function conv(::ScatterNdArrow, args)::Vector{Tensor}
 end
 conv(::NegArrow, args)::Vector{Tensor} = [tf.neg(args...)]
 conv(::ExpArrow, args)::Vector = [tf.exp(args...)]
-conv(arr::Arrows.ReduceSumArrow, args)::Vector{Tensor} = [tf.reduce_sum(args...; axis=arr.axis)]
+#conv(arr::Arrows.ReduceSumArrow, args)::Vector{Tensor} = [tf.reduce_sum(args...; axis=arr.axis)]
 conv(::Arrows.LessThanArrow, args)::Vector{Tensor} = [tf.less(args...)]
 conv(::Arrows.GreaterThanArrow, args)::Vector{Tensor} = [tf.greater(args...)]
+conv(::Arrows.EqualArrow, args)::Vector{Tensor} = [tf.equal(args...)]
 function conv(::Arrows.IfElseArrow, args)::Vector{Tensor}
   a, b, c = args
   [a .* c .+ b .* (1.0 - c)]
@@ -45,7 +48,9 @@ end
 sanitizeconst(value::Tuple) = [value...]
 sanitizeconst(value) = value
 conv(arr::SourceArrow, args)::Vector{Tensor} = [tf.constant(sanitizeconst(arr.value))]
-conv(sarr::SubArrow, xs::Vector) = conv(deref(sarr), xs)
+function conv(sarr::SubArrow, xs::Vector)
+  conv(deref(sarr), xs)
+end
 
 function conv(carr::CompArrow, args::Args)::Vector{Tensor}
   variable_scope(string(name(carr))) do
