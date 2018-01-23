@@ -35,14 +35,22 @@ end
 sanitizeconst(value::Tuple) = [value...]
 sanitizeconst(value) = value
 conv(arr::SourceArrow, args)::Vector{Tensor} = [tf.constant(sanitizeconst(arr.value))]
-conv(sarr::SubArrow, xs::Vector) = conv(deref(sarr), xs)
 
-function conv(carr::CompArrow, args::Args)::Vector{Tensor}
-  variable_scope(string(name(carr))) do
-    length(args) == num_in_ports(carr)
-    interpret(conv, carr, args)
-  end
+function conv(sarr::SubArrow, xs::Vector, tabv::Arrows.TraceAbValues, tparent::Arrows.TraceParent)
+  conv(refer{sarr}, xs)
 end
+
+function conv(sarr::SubArrow{<:Arrows.BroadcastArrow}, xs::Vector, tabv::Arrows.TraceAbValues, tparent::Arrows.TraceParent)
+  idabvals = Arrows.tarr_idabv(Arrows.TraceSubArrow(tparent, sarr), tabv)
+  @assert false
+end
+
+# function conv(carr::CompArrow, args::Args)::Vector{Tensor}
+#   variable_scope(string(name(carr))) do
+#     length(args) == num_in_ports(carr)
+#     Arrows.traceinterpret(conv, carr, args)
+#   end
+# end
 
 """
 Construct `Graph` from `arr`
