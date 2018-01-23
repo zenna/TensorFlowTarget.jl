@@ -14,6 +14,8 @@ env:
 script:
   - julia -e 'Pkg.clone("https://github.com/zenna/Arrows.jl")'
   - julia -e 'Pkg.build("Arrows)'
+  - julia -e 'Pkg.clone("NLopt")'
+  - julia -e 'Pkg.build("NLopt)'
   - julia -e 'Pkg.clone(pwd())'
   - julia -e 'Pkg.build("TensorFlowTarget")'
   - julia -e 'Pkg.test("TensorFlowTarget", coverage=true)'
