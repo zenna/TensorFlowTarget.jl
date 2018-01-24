@@ -1,7 +1,9 @@
 "Conversion to and from tensorflow graphs"
 module TensorFlowTarget
+
 using Arrows
-import Arrows: Arrow, Target, CompArrow, optimize
+import Arrows: Arrow, Target, CompArrow
+import AlioAnalysis: optimize
 using PyCall
 using NamedTuples
 using Spec

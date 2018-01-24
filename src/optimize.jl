@@ -49,7 +49,7 @@ function optimize(carr::CompArrow,
     run(sess, global_variables_initializer())
     i = 44
     function step!()
-      phsvalmap = Dict(ph => Arrows.take1(iters[id]) for (ph, id) in phs)
+      phsvalmap = Dict(ph => AlioAnalysis.take1(iters[id]) for (ph, id) in phs)
       cur_loss, _ = run(sess, [meanloss, minimize_op], phsvalmap)
       summaries = run(sess, merged_summary_op, phsvalmap)
       write(summary_writer, summaries, i)

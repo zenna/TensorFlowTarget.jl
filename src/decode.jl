@@ -49,6 +49,13 @@ sanitizeconst(value::Tuple) = [value...]
 sanitizeconst(value) = value
 conv(arr::SourceArrow, args)::Vector{Tensor} = [tf.constant(sanitizeconst(arr.value))]
 
+function conv(carr::CompArrow, args::Args)::Vector{Tensor}
+  @pre length(args) == num_in_ports(carr)
+  variable_scope(string(name(carr))) do
+    interpret(conv, carr, args)
+  end
+end
+
 function conv(sarr::SubArrow, xs::Vector)
   conv(deref(sarr), xs)
 end
