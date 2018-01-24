@@ -4,6 +4,7 @@ using Arrows
 import Arrows: Arrow, Target, CompArrow, optimize
 using PyCall
 using NamedTuples
+using Spec
 import TensorFlow
 const tf = TensorFlow
 

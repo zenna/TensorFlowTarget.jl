@@ -20,7 +20,7 @@ conv(::Arrows.MaxArrow, args::Args)::Vector{Tensor} = [tf.maximum(args...)]
 conv{N}(arr::DuplArrow{N}, args::Args)::Vector{Tensor} = [args[1] for i = 1:N]
 conv(::IdentityArrow, args::Args)::Vector{Tensor} = [tf.identity(args...)]
 conv(::InvDuplArrow, args::Args)::Vector{Tensor} = [args[1]]
-#conv(arr::UnknownArrow, args::Args)::Vector{Tensor} = arr.func(args)
+conv(arr::UnknownArrow, args::Args)::Vector{Tensor} = arr.func(args)
 conv(::Arrows.AbsArrow, args::Args)::Vector{Tensor} = [tf.abs(args...)]
 conv(::Arrows.ReshapeArrow, args)::Vector{Tensor} = [tf.reshape(args...)]
 # Automatic Broadcasting
@@ -43,7 +43,7 @@ conv(::Arrows.GreaterThanArrow, args)::Vector{Tensor} = [tf.greater(args...)]
 conv(::Arrows.EqualArrow, args)::Vector{Tensor} = [tf.equal(args...)]
 function conv(::Arrows.IfElseArrow, args)::Vector{Tensor}
   a, b, c = args
-  [a .* c .+ b .* (1.0 - c)]
+  [a .* c .+ b .* (1.0 - c)]``
 end
 sanitizeconst(value::Tuple) = [value...]
 sanitizeconst(value) = value
