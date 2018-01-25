@@ -4,6 +4,7 @@ module TensorFlowTarget
 using Arrows
 import Arrows: Arrow, Target, CompArrow
 import AlioAnalysis: optimize
+using AlioAnalysis
 using PyCall
 using NamedTuples
 using Spec
