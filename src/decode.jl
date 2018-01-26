@@ -43,7 +43,7 @@ conv(::Arrows.GreaterThanArrow, args)::Vector{Tensor} = [tf.greater(args...)]
 conv(::Arrows.EqualArrow, args)::Vector{Tensor} = [tf.equal(args...)]
 function conv(::Arrows.IfElseArrow, args)::Vector{Tensor}
   a, b, c = args
-  [a .* c .+ b .* (1.0 - c)]``
+  [a .* c .+ b .* (1.0 - c)]
 end
 sanitizeconst(value::Tuple) = [value...]
 sanitizeconst(value) = value

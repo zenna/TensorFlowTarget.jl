@@ -6,9 +6,8 @@ end
 
 "Multiplayer Perceptron"
 function mlp_template(args, insizes, outsizes)
-  @show args
-  @show batch_size = get(insizes[1])[1]
-  @show inflatsizes, outflatsizes = flatsizes(insizes), flatsizes(outsizes)
+  batch_size = get(insizes[1])[1]
+  inflatsizes, outflatsizes = flatsizes(insizes), flatsizes(outsizes)
   nin = sum(inflatsizes)
   nout = sum(outflatsizes)
   flatargs = [reshape(args[i], (batch_size, inflatsizes[i])) for i = 1:length(args)]
