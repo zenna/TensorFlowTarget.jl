@@ -44,6 +44,7 @@ function optimize(carr::CompArrow, # Redundant? #FIXME, remove
                   ϵprt::Port,
                   initer,
                   target=Type{TFTarget};
+                  logdir::String = log_dir(),
                   kwargs...)
   @pre ϵprt ∈ ⬧(carr)
   graph = tf.Graph()
@@ -68,7 +69,7 @@ function optimize(carr::CompArrow, # Redundant? #FIXME, remove
     minimize_op = tf.train.minimize(optimizer, meanloss) # Should be param
     alpha_summmary = summary.scalar("Mean Loss", meanloss)
     merged_summary_op = summary.merge_all() #
-    summary_writer = summary.FileWriter("./my_log_dir") # FIXME Should be opt?
+    summary_writer = summary.FileWriter(logdir) # FIXME Should be opt?
     showgraphstats(graph)
     run(sess, global_variables_initializer())
     # i = 1
