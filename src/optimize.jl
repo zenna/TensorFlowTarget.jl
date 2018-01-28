@@ -1,6 +1,6 @@
 function showgraphstats(graph)
   opts = collect(TensorFlow.get_operations(graph))
-  println("Opts in graph are:\n", opts)
+  # println("Opts in graph are:\n", opts)
   println("Number of operations is \n", length(opts))
 end
 
