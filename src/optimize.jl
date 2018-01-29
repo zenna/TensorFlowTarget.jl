@@ -35,15 +35,16 @@ argmin_θ(ϵprt): find θ which minimizes ϵprt
 # Arguments
 - `ϵprt`: out port to minimize
 - `over`: ports to optimize over
-- `initer`: Iterator producing vector, one for each in_port of carr
+- `ingen`: Iterator producing vector, one for each in_port of carr
 # Result
 - `θ_optim`: minimal value of ϵprt found
 - `argmin`: argmin of `over` found
 """
 function optimize(carr::CompArrow, # Redundant? #FIXME, remove
                   ϵprt::Port,
-                  initer,
+                  ingen,
                   target=Type{TFTarget};
+                  testingen = ingen,
                   logdir::String = log_dir(),
                   kwargs...)
   @pre ϵprt ∈ ⬧(carr)
@@ -65,22 +66,33 @@ function optimize(carr::CompArrow, # Redundant? #FIXME, remove
     losses = tfarr.out[ϵid]
 
     meanloss = tf.reduce_mean(losses) #FIXME: Should param
+    trainloss = tf.reduce_mean(losses) # FIXME HACK shouldnt need two losses
     optimizer = tf.train.AdamOptimizer() #FIXME: Should be param
     minimize_op = tf.train.minimize(optimizer, meanloss) # Should be param
-    alpha_summmary = summary.scalar("Mean Loss", meanloss)
+    mean_train_loss = summary.scalar("Mean Train Loss", meanloss)
+    mean_test_loss = summary.scalar("Mean Test Loss", trainloss)
     merged_summary_op = summary.merge_all() #
     summary_writer = summary.FileWriter(logdir) # FIXME Should be opt?
     showgraphstats(graph)
     run(sess, global_variables_initializer())
-    # i = 1
+    
     function step!(cb_data, callbacks)
-      indata = AlioAnalysis.take1(initer)
+      indata = AlioAnalysis.take1(ingen)
       phsvalmap = populate(indata, ph_pid)
       cur_loss, _ = run(sess, [meanloss, minimize_op], phsvalmap)
+
+      # HACK
+      if testingen != ingen
+        # Don't minimize
+        testindata = AlioAnalysis.take1(testingen)
+        phsvalmap = populate(testindata, ph_pid)
+        train_loss = run(sess, [trainloss], phsvalmap)[1]
+        println("Trainloss, ", train_loss)
+      end
+
       @show cur_loss
       summaries = run(sess, merged_summary_op, phsvalmap)
       write(summary_writer, summaries, cb_data.i)
-      # i = i + 1
       cb_data_ = merge(cb_data, @NT(loss = cur_loss))
       foreach(cb->cb(cb_data_), callbacks)
       cur_loss
