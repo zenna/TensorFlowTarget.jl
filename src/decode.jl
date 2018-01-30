@@ -1,56 +1,59 @@
 # Convert an arrow to a tensorflow graph
 Args = Vector{<:tf.AbstractTensor}
-conv(::PowArrow, args::Args)::Vector{Tensor} = [tf.pow(args...)]
-conv(::LogArrow, args::Args)::Vector{Tensor} = [tf.log(args...)]
-conv(::LogBaseArrow, args::Args)::Vector{Tensor} =
+conv(::PowArrow, args::Args)::Args = [tf.pow(args...)]
+conv(::LogArrow, args::Args)::Args = [tf.log(args...)]
+conv(::LogBaseArrow, args::Args)::Args =
   [tf.log(args[1]) / tf.log(args[1])] # no logbase, use: log _{b}(x)=log _{k}(x)}/log _{k}(b)
-conv(::AddArrow, args::Args)::Vector{Tensor} = [tf.add(args...)]
-conv(::MulArrow, args::Args)::Vector{Tensor} = [tf.multiply(args...)]
-conv(::DivArrow, args::Args)::Vector{Tensor} = [args[1] / args[2]]
-conv(::SqrArrow, args::Args)::Vector{Tensor} = [tf.square(args...)]
-conv(::SqrtArrow, args::Args)::Vector{Tensor} = [tf.sqrt(args...)]
-conv(::MeanArrow, args::Args)::Vector{Tensor} = [tf.reduce_mean(tf.stack(args), axis=1)]
-conv(::Arrows.ReduceVarArrow, args::Args)::Vector{Tensor} = [reduce_var(args)]
-conv(::SinArrow, args::Args)::Vector{Tensor} = [tf.sin(args...)]
-conv(::SubtractArrow, args::Args)::Vector{Tensor} = [args[1] - args[2]]
-conv(::CosArrow, args::Args)::Vector{Tensor} = [tf.cos(args...)]
-conv(::ASinArrow, args::Args)::Vector{Tensor} = [tf.asin(args...)]
-conv(::ACosArrow, args::Args)::Vector{Tensor} = [tf.acos(args...)]
-conv(::Arrows.MaxArrow, args::Args)::Vector{Tensor} = [tf.maximum(args...)]
-conv{N}(arr::DuplArrow{N}, args::Args)::Vector{Tensor} = [args[1] for i = 1:N]
-conv(::IdentityArrow, args::Args)::Vector{Tensor} = [tf.identity(args...)]
-conv(::InvDuplArrow, args::Args)::Vector{Tensor} = [args[1]]
-conv(arr::UnknownArrow, args::Args)::Vector{Tensor} = arr.func(args)
-conv(::Arrows.AbsArrow, args::Args)::Vector{Tensor} = [tf.abs(args...)]
-conv(::Arrows.ReshapeArrow, args::Args)::Vector{Tensor} = [tf.reshape(args...)]
+conv(::AddArrow, args::Args)::Args = [tf.add(args...)]
+conv(::MulArrow, args::Args)::Args = [tf.multiply(args...)]
+conv(::DivArrow, args::Args)::Args = [args[1] / args[2]]
+conv(::SqrArrow, args::Args)::Args = [tf.square(args...)]
+conv(::SqrtArrow, args::Args)::Args = [tf.sqrt(args...)]
+conv(::MeanArrow, args::Args)::Args = [tf.reduce_mean(tf.stack(args), axis=1)]
+
+conv(::Arrows.ReduceVarArrow, args::Args)::Args = [reduce_var(args)]
+conv(arr::Arrows.ReduceMeanArrow, args::Args)::Args = [tf.reduce_mean(args; arr.axis, arr.keepdims)]
+conv(arr::Arrows.ReduceSumArrow, args)::Args = [tf.reduce_sum(args...; axis=arr.axis)]
+
+conv(::SinArrow, args::Args)::Args = [tf.sin(args...)]
+conv(::SubtractArrow, args::Args)::Args = [args[1] - args[2]]
+conv(::CosArrow, args::Args)::Args = [tf.cos(args...)]
+conv(::ASinArrow, args::Args)::Args = [tf.asin(args...)]
+conv(::ACosArrow, args::Args)::Args = [tf.acos(args...)]
+conv(::Arrows.MaxArrow, args::Args)::Args = [tf.maximum(args...)]
+conv{N}(arr::DuplArrow{N}, args::Args)::Args = [args[1] for i = 1:N]
+conv(::IdentityArrow, args::Args)::Args = [tf.identity(args...)]
+conv(::InvDuplArrow, args::Args)::Args = [args[1]]
+conv(arr::UnknownArrow, args::Args)::Args = arr.func(args)
+conv(::Arrows.AbsArrow, args::Args)::Args = [tf.abs(args...)]
+conv(::Arrows.ReshapeArrow, args::Args)::Args = [tf.reshape(args...)]
 # Automatic Broadcasting
-conv(::Arrows.BroadcastArrow, args::Args)::Vector{Tensor} = [tf.identity(args...)]
-function conv(::GatherNdArrow, args::Args)::Vector{Tensor}
+conv(::Arrows.BroadcastArrow, args::Args)::Args = [tf.identity(args...)]
+function conv(::GatherNdArrow, args::Args)::Args
   params, indices_ = args[1], args[2]
   indices_ = indices_ + convert(tf.Tensor{eltype(indices_)}, 1)
   [tf.gather_nd(params, indices_)]
 end
-function conv(::ScatterNdArrow, args)::Vector{Tensor}
+function conv(::ScatterNdArrow, args)::Args
   updates, indices_, shape = args[1], args[2], args[3]
   indices_ = indices_ + convert(tf.Tensor{eltype(indices_)}, 1)
   [tf.scatter_nd(indices_, updates, shape)]
 end
-conv(::NegArrow, args::Args)::Vector{Tensor} = [tf.neg(args...)]
+conv(::NegArrow, args::Args)::Args = [tf.neg(args...)]
 conv(::ExpArrow, args::Args)::Vector = [tf.exp(args...)]
-#conv(arr::Arrows.ReduceSumArrow, args)::Vector{Tensor} = [tf.reduce_sum(args...; axis=arr.axis)]
-conv(::Arrows.LessThanArrow, args::Args)::Vector{Tensor} = [tf.less(args...)]
-conv(::Arrows.GreaterThanArrow, args::Args)::Vector{Tensor} = [tf.greater(args...)]
-conv(::Arrows.EqualArrow, args::Args)::Vector{Tensor} = [tf.equal(args...)]
-function conv(::Arrows.IfElseArrow, args::Args)::Vector{Tensor}
+conv(::Arrows.LessThanArrow, args::Args)::Args = [tf.less(args...)]
+conv(::Arrows.GreaterThanArrow, args::Args)::Args = [tf.greater(args...)]
+conv(::Arrows.EqualArrow, args::Args)::Args = [tf.equal(args...)]
+function conv(::Arrows.IfElseArrow, args::Args)::Args
   a, b, c = args
   [a .* c .+ b .* (1.0 - c)]
 end
 sanitizeconst(value::Tuple) = [value...]
 sanitizeconst(value) = value
-function conv(arr::SourceArrow, args::Args)::Vector{Tensor}
+function conv(arr::SourceArrow, args::Args)::Args
   [tf.constant(sanitizeconst(arr.value))]
 end
-function conv(carr::CompArrow, args::Args)::Vector{Tensor}
+function conv(carr::CompArrow, args::Args)::Args
   @pre length(args) == num_in_ports(carr)
   variable_scope(string(name(carr))) do
     # @assert false
