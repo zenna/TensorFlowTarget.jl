@@ -22,6 +22,8 @@ include("extensions.jl")
 include("decode.jl")
 include("optimize.jl")
 include("templates/mlp.jl")
+include("templates/conv.jl")
+
 
 "Tensorflow target for dispatch"
 struct TFTarget <: Target end

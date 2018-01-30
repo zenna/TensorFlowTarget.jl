@@ -4,11 +4,12 @@ function showgraphstats(graph)
   println("Number of operations is \n", length(opts))
 end
 
-function init_placeholders(arr::Arrow)
+"Create placeholders for each in port"
+function init_placeholders(arr::Arrow; TensorT=Float32)
   intens = Tensor[]
   ph_pid = Dict{Tensor, Int}()
   for (i, prt) in enumerate(▸(arr))
-    ph = tf.placeholder(Float64, name="inp_$i")
+    ph = tf.placeholder(TensorT, name="inp_$i")
     push!(intens, ph)
     ph_pid[ph] = i
     # end
@@ -35,6 +36,7 @@ function optimize(carr::CompArrow, # Redundant? #FIXME, remove
                   testevery = 10,
                   testingen = ingen,
                   logdir::String = log_dir(),
+                  TensorT = Float32,
                   kwargs...)
   @pre ϵprt ∈ ⬧(carr)
   graph = tf.Graph()
@@ -48,7 +50,7 @@ function optimize(carr::CompArrow, # Redundant? #FIXME, remove
   ## FIXME: Can't we break this up?
   tf.as_default(graph) do
     # Create input tensor for reach in port and mapping between port ids and placeholders
-    intens, ph_pid = init_placeholders(carr)
+    intens, ph_pid = init_placeholders(carr, TensorT = TensorT)
     tfarr = Graph(carr, graph, intens)
     ϵid = findfirst(◂(ϵprt.arrow), ϵprt)
     losses = tfarr.out[ϵid]
