@@ -53,9 +53,9 @@ function conv_template(args,
 
   # Split before softmax
   xs = tf.split(4, length(outsizes), x)
-  # xs_sq = map(xs) do x
-  #   tf.reshape(nn.softmax(tf.squeeze(x, [2, 4])), get(outsizes[1]))
-  # end
+  xs_sq = map(xs) do x
+    tf.reshape(nn.softmax(tf.squeeze(x, [2, 4])), get(outsizes[1]))
+  end
 end
 
 

@@ -1,5 +1,6 @@
 # Convert an arrow to a tensorflow graph
 Args = Vector{<:tf.AbstractTensor}
+
 conv(::PowArrow, args::Args)::Args = [tf.pow(args...)]
 conv(::LogArrow, args::Args)::Args = [tf.log(args...)]
 conv(::LogBaseArrow, args::Args)::Args =
@@ -11,9 +12,12 @@ conv(::SqrArrow, args::Args)::Args = [tf.square(args...)]
 conv(::SqrtArrow, args::Args)::Args = [tf.sqrt(args...)]
 conv(::MeanArrow, args::Args)::Args = [tf.reduce_mean(tf.stack(args), axis=1)]
 
-conv(::Arrows.ReduceVarArrow, args::Args)::Args = [reduce_var(args)]
-conv(arr::Arrows.ReduceMeanArrow, args::Args)::Args = [tf.reduce_mean(args; arr.axis, arr.keepdims)]
-conv(arr::Arrows.ReduceSumArrow, args)::Args = [tf.reduce_sum(args...; axis=arr.axis)]
+# Reductions
+conv(::Arrows.ReduceVarArrow, arg::Args)::Args = [reduce_var(arg)]
+conv(arr::Arrows.ReduceMeanArrow, arg::Args)::Args =
+  [tf.reduce_mean(arg...; axis = arr.axis, keep_dims = arr.keepdims)]
+conv(arr::Arrows.ReduceSumArrow, arg::Args)::Args =
+  [tf.reduce_sum(arg...; axis = arr.axis, keep_dims=arr.keepdims)]
 
 conv(::SinArrow, args::Args)::Args = [tf.sin(args...)]
 conv(::SubtractArrow, args::Args)::Args = [args[1] - args[2]]
@@ -27,6 +31,7 @@ conv(::InvDuplArrow, args::Args)::Args = [args[1]]
 conv(arr::UnknownArrow, args::Args)::Args = arr.func(args)
 conv(::Arrows.AbsArrow, args::Args)::Args = [tf.abs(args...)]
 conv(::Arrows.ReshapeArrow, args::Args)::Args = [tf.reshape(args...)]
+
 # Automatic Broadcasting
 conv(::Arrows.BroadcastArrow, args::Args)::Args = [tf.identity(args...)]
 function conv(::GatherNdArrow, args::Args)::Args
