@@ -29,15 +29,21 @@ end
 function conv_template(args,
                        insizes,
                        outsizes;
-                       channel_dim=4,
-                       batch_norm=false,
-                       h_channels=8,
-                       nhlayers=0,
+                       channel_dim=4,   # Which dimension if hte channel
+                       batch_norm=false,# Do batch normalization
+                       nhlayers=0,      # Nubmer of hidden layers 
+                       h_channels=8,    # Numbers of channels in each hidden layer
                        combine_inputs=xs->tf.stack(xs, axis=channel_dim),
                        activation=tf.nn.elu,
                        T=Float32,
                        kwargs...)
 
+  @show h_channels
+  @show activation
+  @show nhlayers
+  h_channels = 8
+  activation = tf.nn.elu
+  nhlayers = 0
   # @pre same(size.([insizes; outsizes])) "Variable sizes unsupported"
   @pre ndims(insizes[1]) == 3 "nchannels != 3 is unhandled"
   in_channels = length(args)

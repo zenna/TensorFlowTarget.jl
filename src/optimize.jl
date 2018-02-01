@@ -33,15 +33,17 @@ function optimize(carr::CompArrow, # Redundant? #FIXME, remove
                   ϵprt::Port,
                   ingen,
                   target=Type{TFTarget};
+                  @req(opt),
                   testevery = 10,
                   testingen = ingen,
                   logdir::String = log_dir(),
                   TensorT = Float32,
                   kwargs...)
   @pre ϵprt ∈ ⬧(carr)
+  println("Starting TensorFlow optimization with options:")
+  show(STDOUT, "text/plain", opt)
   graph = tf.Graph()
   sess = tf.Session(graph)
-
   summary = TensorFlow.summary
   # weight_summary = summary.histogram("Parameters", weights)
 
@@ -56,8 +58,9 @@ function optimize(carr::CompArrow, # Redundant? #FIXME, remove
     losses = tfarr.out[ϵid]
 
     meanloss = tf.reduce_mean(losses) #FIXME: Should param
-    optimizer = tf.train.AdamOptimizer() #FIXME: Should be param
+    optimizer = opt[:hyper_gen]()
     min_op = tf.train.minimize(optimizer, meanloss) # Should be param
+
     mean_train_loss = summary.scalar("Loss", meanloss)
     merged_summary_op = summary.merge_all() #
     summary_writer = summary.FileWriter(joinpath(logdir, "train"))
