@@ -137,9 +137,9 @@ function graph_to_arrow(name::Symbol,
       left_port = ten_in_port[ten]
       # set_port_shape(left_port, const_to_tuple(ten.get_shape().as_list()))
     else
-      out_port_id = value_index(ten) + 1
+      pos_in_out_ports = value_index(ten) + 1
       left_arrow = arrow_from_op(c, get_op(ten), op_to_arrow)
-      left_port = out_sub_port(left_arrow, out_port_id)
+      left_port = out_sub_port(left_arrow, pos_in_out_ports)
       update_seen!(get_op(ten), seen_tens, to_see_tens)
     end
 
@@ -147,9 +147,9 @@ function graph_to_arrow(name::Symbol,
       the_inputs = get_inputs(rec_op)
       for (i, input_ten) in enumerate(the_inputs)
         if ten == input_ten
-          in_port_id = i
+          pos_in_in_ports = i
           right_arrow = arrow_from_op(c, rec_op, op_to_arrow)
-          link_ports!(left_port, in_sub_port(right_arrow, in_port_id))
+          link_ports!(left_port, in_sub_port(right_arrow, pos_in_in_ports))
         end
       end
     end
